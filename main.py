@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QCheckBox, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QCheckBox, QVBoxLayout, QGridLayout
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 import subprocess
@@ -38,6 +38,7 @@ class SQLMapApp(QWidget):
         self.use_risk = QCheckBox('risk')
         self.use_dump = QCheckBox('dump')
         self.use_tables = QCheckBox('tables')
+        self.use_file = QCheckBox('Scan from File')
 
         # Кнопки
         scan_button = QPushButton('START')
@@ -67,15 +68,19 @@ class SQLMapApp(QWidget):
         layout.addWidget(search_label)
         layout.addWidget(self.search_input)
         layout.addWidget(search_button)
-        layout.addWidget(self.use_threads)
-        layout.addWidget(self.use_batch)
-        layout.addWidget(self.use_dbs)
-        layout.addWidget(self.use_tables)
-        layout.addWidget(self.use_dump)
-        layout.addWidget(self.use_level)
-        layout.addWidget(self.use_risk)
-        layout.addWidget(self.use_auth)
-        layout.addWidget(scan_button)
+        grid_layout = QGridLayout()
+        grid_layout.addWidget(self.use_threads, 6, 0)
+        grid_layout.addWidget(self.use_batch, 6, 1)
+        grid_layout.addWidget(self.use_dbs, 7, 0)
+        grid_layout.addWidget(self.use_tables, 7, 1)
+        grid_layout.addWidget(self.use_dump, 8, 0)
+        grid_layout.addWidget(self.use_level, 8, 1)
+        grid_layout.addWidget(self.use_risk, 9, 0)
+        grid_layout.addWidget(self.use_auth, 9, 1)
+        grid_layout.addWidget(self.use_file, 10, 0, 1, 2)
+        grid_layout.addWidget(scan_button, 11, 0, 1, 2)
+        
+        layout.addLayout(grid_layout)
 
         self.setLayout(layout)
         self.setStyleSheet('QWidget {background-color: grey;}'
@@ -98,46 +103,54 @@ class SQLMapApp(QWidget):
         risk = self.use_risk.isChecked()
         dump = self.use_dump.isChecked()
         tables = self.use_tables.isChecked()
+        use_file = self.use_file.isChecked()
 
-        command = ['sqlmap', '-u', url]
+        if use_file:
+            with open("search_results.txt", "r") as f:
+                urls = f.read().splitlines()
+        else:
+            urls = [url]
 
-        if data:
-            command.extend(['--data', data])
+        for url in urls:
+            command = ['sqlmap', '-u', url]
 
-        if database:
-            command.extend(['-D', database])
+            if data:
+                command.extend(['--data', data])
 
-        if table:
-            command.extend(['-T', table])
+            if database:
+                command.extend(['-D', database])
 
-        if auth:
-            command.append('--auth')
+            if table:
+                command.extend(['-T', table])
 
-        if batch:
-            command.append('--batch')
+            if auth:
+                command.append('--auth')
 
-        if threads:
-            command.append('--threads=10')
+            if batch:
+                command.append('--batch')
 
-        if dbs:
-            command.append('--dbs')
+            if threads:
+                command.append('--threads=10')
 
-        if level:
-            command.append('--level=3')
+            if dbs:
+                command.append('--dbs')
 
-        if risk:
-            command.append('--risk=3')
+            if level:
+                command.append('--level=3')
 
-        if dump:
-            command.append('--dump')
+            if risk:
+                command.append('--risk=3')
 
-        if tables:
-            command.append('--tables')
+            if dump:
+                command.append('--dump')
 
-        try:
-            subprocess.run(command, check=True)
-        except subprocess.CalledProcessError as e:
-            print(f'Error: {e.returncode}')
+            if tables:
+                command.append('--tables')
+
+            try:
+                subprocess.run(command, check=True)
+            except subprocess.CalledProcessError as e:
+                print(f'Error: {e.returncode}')
 
     def perform_search(self):
         search_query = self.search_input.text()
